@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>80's Synthwave Refund Workflow</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #120458;
+            color: #ff00ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-image:
+                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+        }
+        .container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1, h2 {
+            color: #00ffff;
+            text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 1.8em;
+        }
+        button, input, select {
+            background-color: #ff00ff;
+            color: #120458;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        input, select {
+            width: 200px;
+            text-align: center;
+        }
+        button:hover, input:focus, select:focus {
+            background-color: #00ffff;
+            color: #120458;
+            box-shadow: 0 0 20px #00ffff;
+        }
+        #info, #refundCalc, #cancellationMemo {
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: left;
+            border-radius: 5px;
+            box-shadow: inset 0 0 10px #00ffff;
+        }
+        #backBtn {
+            background-color: #00ffff;
+            color: #120458;
+        }
+        #backBtn:hover {
+            background-color: #ff00ff;
+        }
+        #progress-bar {
+            width: 100%;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        #progress {
+            width: 0;
+            height: 20px;
+            background-color: #00ffff;
+            transition: width 0.5s ease-in-out;
+            box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        #question {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Refund Workflow</h1>
+        <div id="progress-bar">
+            <div id="progress"></div>
+        </div>
+        <div id="question"></div>
+        <div style="text-align: center;">
+            <button id="yesBtn" onclick="nextQuestion('yes')">Yes</button>
+            <button id="noBtn" onclick="nextQuestion('no')">No</button>
+            <button id="backBtn" onclick="goBack()" style="display: none;">Back</button>
+        </div>
+        <div id="result" style="margin-top: 20px; text-align: center;"></div>
+        <div id="info"></div>
+        <div id="refundCalc" style="display: none;">
+            <h2>Refund Calculator</h2>
+            <div>
+                <label for="subscriptionType">Subscription Type:</label>
+                <select id="subscriptionType">
+                    <option value="monthly">Monthly</option>
+                    <option value="annual">Annual</option>
+                </select>
+            </div>
+            <div>
+                <label for="totalPaid">Total Paid Amount:</label>
+                <input type="number" id="totalPaid" placeholder="Total Paid Amount" step="0.01">
+            </div>
+            <div>
+                <label for="startDate">Starting Date:</label>
+                <input type="date" id="startDate">
+            </div>
+            <div>
+                <label for="refundDate">Refund Date:</label>
+                <input type="date" id="refundDate">
+            </div>
+            <button onclick="calculateRefund()">Calculate Refund</button>
+            <div id="refundResult"></div>
+        </div>
+        <div id="cancellationMemo" style="display: none;">
+            <h2>Cancellation Memo</h2>
+            <p>Please ensure to cancel the refunded subscription immediately.</p>
+        </div>
+    </div>
+
+<script>
+    const workflow = {
+        "start": {
+            "question": "Multiple subscriptions on the same account?",
+            "yes": "initiate_refund",
+            "no": "cooling_off",
+            "info": "- Refund is allowed regardless of when VX realizes it.\n- Eligible if VX becomes eligible for a partnership subscription.\n- We don't refund if family members purchased on another phone number.\n- Can refund DTC subscription if VX had another IAP or Partner.\n- For GIAP, check which subscription they want to keep when entitled to a full refund.\n- Refund only if both subscriptions are visible on the account.\n- Pro-rata refund from the date of multiple subscriptions.\n- Refund calculated as: (Monthly charge / 30 days) * days used."
+        },
+        "cooling_off": {
+            "question": "Eligible for Cooling Off?",
+            "yes": "initiate_refund",
+            "no": "service_gesture",
+            "info": "- 14 days for new D2C purchases\n- Only for the first purchase\n- Partner subscribers forwarded to partner\n- AIAP guided to Apple site/app\n- GIAP guided to Google site/app\n- Google subscribers can be refunded by T2 if they reach out the same day of purchase and are entitled to a full refund\n- Exception: 4-months cool-off for disabilities, 65+, new immigrants"
+        },
+        "service_gesture": {
+            "question": "Eligible for Service Gesture?",
+            "yes": "initiate_refund",
+            "no": "early_cancellation",
+            "info": "- Customers with first time renewals must reach out in 14 days for annual and 7 days for monthly subscription\n- Refund if VX was using a VPN and managed to subscribe from abroad but cannot stream.( VX must contact withing the 1st week)\n- NOTE: we don't refund if the VX moved to another country . We can suggest that they gift their subscription to someone else in Israel) "
+        },
+        "initiate_refund": {
+            "question": "Initiate Refund",
+            "yes": null,
+            "no": null,
+            "info": "Proceed with the full refund or a pro-rata refund based on eligibility"
+        },
+        "early_cancellation": {
+            "question": "Early Cancellation",
+            "yes": null,
+            "no": null,
+            "info": "- Last resort for customer\n-Customers can cancel and request refund anytime\n- Escalate to T2 for manual process if already cancelled\n -We guide the VX to our website and help them request the refund/n IAP subscribers will be guided to the respective platforms same goes for partner subscriptions."
+        }
+    };
+
+        let currentStep = 'start';
+        let history = [];
+
+        function updateQuestion() {
+            document.getElementById('question').innerText = workflow[currentStep].question;
+            document.getElementById('info').innerText = workflow[currentStep].info;
+            if (workflow[currentStep].yes === null && workflow[currentStep].no === null) {
+                document.getElementById('yesBtn').style.display = 'none';
+                document.getElementById('noBtn').style.display = 'none';
+                document.getElementById('result').innerText = "Final step: " + workflow[currentStep].question;
+                if (currentStep !== 'early_cancellation') {
+                    document.getElementById('refundCalc').style.display = 'block';
+                    document.getElementById('cancellationMemo').style.display = 'block';
+                } else {
+                    document.getElementById('refundCalc').style.display = 'none';
+                    document.getElementById('cancellationMemo').style.display = 'none';
+                }
+            } else {
+                document.getElementById('yesBtn').style.display = 'inline-block';
+                document.getElementById('noBtn').style.display = 'inline-block';
+                document.getElementById('result').innerText = "";
+                document.getElementById('refundCalc').style.display = 'none';
+                document.getElementById('cancellationMemo').style.display = 'none';
+            }
+            document.getElementById('backBtn').style.display = history.length > 0 ? 'inline-block' : 'none';
+            updateProgress();
+        }
+
+        function nextQuestion(answer) {
+            if (workflow[currentStep][answer]) {
+                history.push(currentStep);
+                currentStep = workflow[currentStep][answer];
+                updateQuestion();
+            }
+        }
+
+        function goBack() {
+            if (history.length > 0) {
+                currentStep = history.pop();
+                updateQuestion();
+            }
+        }
+
+        function updateProgress() {
+            const totalSteps = Object.keys(workflow).length;
+            const currentStepIndex = Object.keys(workflow).indexOf(currentStep) + 1;
+            const progressPercentage = (currentStepIndex / totalSteps) * 100;
+            document.getElementById('progress').style.width = `${progressPercentage}%`;
+        }
+
+        function calculateRefund() {
+            const subscriptionType = document.getElementById('subscriptionType').value;
+            const totalPaid = parseFloat(document.getElementById('totalPaid').value);
+            const startDate = new Date(document.getElementById('startDate').value);
+            const refundDate = new Date(document.getElementById('refundDate').value);
+
+            if (isNaN(totalPaid) || !startDate || !refundDate) {
+                alert('Please fill in all fields correctly.');
+                return;
+            }
+
+            const totalDaysUsed = Math.floor((refundDate - startDate) / (1000 * 60 * 60 * 24));
+            const paidDaysUsed = Math.max(0, totalDaysUsed - 1); // Subtract 1 day (first day is free)
+            const totalDays = subscriptionType === 'annual' ? 365 : 30;
+            const dailyPrice = totalPaid / totalDays;
+            const refundAmount = totalPaid - (dailyPrice * paidDaysUsed);
+
+            document.getElementById('refundResult').innerHTML = `
+                <p>Subscription Type: ${subscriptionType.charAt(0).toUpperCase() + subscriptionType.slice(1)}</p>
+                <p>Total days used: ${totalDaysUsed}</p>
+                <p>Paid days used: ${paidDaysUsed}</p>
+                <p>Daily price: ${dailyPrice.toFixed(2)} Shekels</p>
+                <p>Refund amount: ${refundAmount.toFixed(2)} Shekels</p>
+            `;
+        }
+
+        updateQuestion();
+    </script>
+</body>
+</html>
